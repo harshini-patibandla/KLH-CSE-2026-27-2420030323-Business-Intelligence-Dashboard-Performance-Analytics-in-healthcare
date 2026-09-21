@@ -16,8 +16,12 @@ from sklearn.metrics import (
     f1_score
 )
 
+from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+
+from xgboost import XGBClassifier
+from catboost import CatBoostClassifier
 
 
 # ============================================================
@@ -119,6 +123,56 @@ def train_models(
     print("\nTraining samples:", X_train.shape[0])
     print("Testing samples:", X_test.shape[0])
 
+
+    # ========================================================
+    # LOGISTIC REGRESSION
+    # ========================================================
+
+    print("\nTraining Logistic Regression...")
+
+    logistic_regression = LogisticRegression(
+        max_iter=2000,
+        random_state=42
+    )
+
+    logistic_regression.fit(
+        X_train,
+        y_train
+    )
+
+    lr_predictions = logistic_regression.predict(
+        X_test
+    )
+
+    lr_accuracy = accuracy_score(
+        y_test,
+        lr_predictions
+    )
+
+    lr_precision = precision_score(
+        y_test,
+        lr_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    lr_recall = recall_score(
+        y_test,
+        lr_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    lr_f1 = f1_score(
+        y_test,
+        lr_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    print("Logistic Regression completed.")
+
+
     # ========================================================
     # DECISION TREE
     # ========================================================
@@ -218,6 +272,110 @@ def train_models(
 
 
     # ========================================================
+    # XGBOOST
+    # ========================================================
+
+    print("\nTraining XGBoost...")
+
+    xgboost_model = XGBClassifier(
+        n_estimators=100,
+        random_state=42,
+        eval_metric="mlogloss"
+    )
+
+    xgboost_model.fit(
+        X_train,
+        y_train
+    )
+
+    xgb_predictions = xgboost_model.predict(
+        X_test
+    )
+
+    xgb_accuracy = accuracy_score(
+        y_test,
+        xgb_predictions
+    )
+
+    xgb_precision = precision_score(
+        y_test,
+        xgb_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    xgb_recall = recall_score(
+        y_test,
+        xgb_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    xgb_f1 = f1_score(
+        y_test,
+        xgb_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    print("XGBoost completed.")
+
+
+    # ========================================================
+    # CATBOOST
+    # ========================================================
+
+    print("\nTraining CatBoost...")
+
+    catboost_model = CatBoostClassifier(
+        iterations=100,
+        verbose=0,
+        random_state=42
+    )
+
+    catboost_model.fit(
+        X_train,
+        y_train
+    )
+
+    cat_predictions = catboost_model.predict(
+        X_test
+    )
+
+    cat_predictions = np.array(
+        cat_predictions
+    ).reshape(-1)
+
+    cat_accuracy = accuracy_score(
+        y_test,
+        cat_predictions
+    )
+
+    cat_precision = precision_score(
+        y_test,
+        cat_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    cat_recall = recall_score(
+        y_test,
+        cat_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    cat_f1 = f1_score(
+        y_test,
+        cat_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    print("CatBoost completed.")
+
+
+    # ========================================================
     # MODEL RESULTS
     # ========================================================
 
@@ -225,32 +383,50 @@ def train_models(
 
         "Dataset": [
             dataset_name,
+            dataset_name,
+            dataset_name,
+            dataset_name,
             dataset_name
         ],
 
         "Model": [
+            "Logistic Regression",
             "Decision Tree",
-            "Random Forest"
+            "Random Forest",
+            "XGBoost",
+            "CatBoost"
         ],
 
         "Accuracy": [
+            lr_accuracy,
             dt_accuracy,
-            rf_accuracy
+            rf_accuracy,
+            xgb_accuracy,
+            cat_accuracy
         ],
 
         "Precision": [
+            lr_precision,
             dt_precision,
-            rf_precision
+            rf_precision,
+            xgb_precision,
+            cat_precision
         ],
 
         "Recall": [
+            lr_recall,
             dt_recall,
-            rf_recall
+            rf_recall,
+            xgb_recall,
+            cat_recall
         ],
 
         "F1_Score": [
+            lr_f1,
             dt_f1,
-            rf_f1
+            rf_f1,
+            xgb_f1,
+            cat_f1
         ]
     })
 

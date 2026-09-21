@@ -744,10 +744,13 @@ elif page == "🤖 Machine Learning":
 
     st.markdown(
         """
-        Two classification algorithms were evaluated:
+        Five classification algorithms were evaluated:
 
+        - Logistic Regression
         - Decision Tree
         - Random Forest
+        - XGBoost
+        - CatBoost
 
         The evaluation uses Accuracy, Precision, Recall and F1-score.
         """
@@ -1299,8 +1302,9 @@ elif page == "📝 Conclusions":
 
         ### 3. Machine Learning
 
-        Decision Tree and Random Forest classification models were
-        developed and evaluated using standard classification metrics.
+        Logistic Regression, Decision Tree, Random Forest, XGBoost and
+        CatBoost classification models were developed and evaluated
+        using standard classification metrics.
 
 
         ### 4. Explainable AI
