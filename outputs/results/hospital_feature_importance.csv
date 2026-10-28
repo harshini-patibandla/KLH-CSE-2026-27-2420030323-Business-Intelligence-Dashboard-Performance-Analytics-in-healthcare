@@ -1,0 +1,73 @@
+Feature,Importance
+Age,0.19709262235615457
+Age_Group_60+,0.13095137985081803
+Total_Cost,0.08546754536723437
+Satisfaction,0.08020951049254353
+Condition_Respiratory Infection,0.055649747056114994
+Medication_Antibiotics and Rest,0.05133660613625545
+Medication_Physical Therapy and Pain Management,0.03469799688493787
+Condition_Osteoarthritis,0.028881815287842522
+Medication_Insulin Therapy,0.025556396081774114
+Medication_Cardiac Catheterization,0.023587006922571197
+Age_Group_31-45,0.02321917317976741
+Condition_Hypertension,0.02114762668239402
+Medication_Radiation Therapy,0.02091368549001211
+Medication_Medication and Counseling,0.020664614623437674
+Condition_Diabetes,0.019299351554230845
+Medication_CT Scan and Medication,0.01696866232340031
+Condition_Prostate Cancer,0.016636828794500836
+Condition_Stroke,0.016215717903760182
+Condition_Heart Attack,0.014320347400648203
+Age_Group_46-60,0.013445758894726968
+Patient_State_Jammu & Kashmir,0.008513155209353904
+Readmission_Yes,0.008464230221919831
+Patient_State_Delhi,0.00771020751152738
+Medication_Appendectomy,0.006716529978599902
+Gender_Male,0.006468357795353041
+Condition_Appendicitis,0.005743847889497227
+Patient_State_Chandigarh,0.005304101714301293
+Medication_X-Ray and Splint,0.004501793652843801
+Medication_Surgery and Chemotherapy,0.004027438522031131
+Medication_Cast and Physical Therapy,0.003985400598927162
+Medication_Epinephrine Injection,0.003396060546368948
+Condition_Fractured Leg,0.0031682994485076844
+Medication_Lithotripsy,0.0029716833214845305
+Patient_State_Goa,0.0028578217929084828
+Patient_State_Odisha,0.0028452443015937216
+Condition_Heart Disease,0.002462205198976927
+Condition_Fractured Arm,0.0024168757813487264
+Patient_State_Assam,0.002401856312498683
+Patient_State_Sikkim,0.0023415062077875265
+Condition_Kidney Stones,0.0020377997502292033
+Condition_Cancer,0.001788764831335672
+Medication_Delivery and Postnatal Care,0.0013674173002987313
+Patient_State_Karnataka,0.0012781541478526788
+Patient_State_West Bengal,0.0010514977572903756
+Patient_State_Himachal Pradesh,0.0009872810986404344
+Patient_State_Meghalaya,0.0009119703370018693
+Patient_State_Puducherry,0.0008942553712713454
+Condition_Childbirth,0.0008188100560216961
+Patient_State_Kerala,0.0007900889116389753
+Length_of_Stay,0.0006857930507708056
+Admission_Month,0.0005829152132815602
+Patient_State_Manipur,0.0005625306917341185
+Patient_State_Madhya Pradesh,0.0005301844387362934
+Patient_State_Arunachal Pradesh,0.0005132213559741868
+Patient_State_Maharastra,0.00039926199341174825
+Patient_State_Tamil Nadu,0.0003666528842929987
+Patient_State_Haryana,0.00028889168349847705
+Stay_Category_Short Stay,0.0002812760987724307
+Patient_State_Punjab,0.0002707273021178945
+Admission_Year,0.00022458205841816936
+Patient_State_Tripura,0.00020092675095710342
+Year_of_Admission,0.00019636153672024446
+Stay_Category_Medium Stay,0.00015578439627232454
+Patient_State_Mizoram,0.00012600272728450663
+Insurance_Claimed_Yes,0.00012341969369943922
+Patient_State_Gujarat,4.9094785043956534e-06
+Patient_State_Rajasthan,1.50979501727101e-06
+Patient_State_Bihar,0.0
+Patient_State_Nagaland,0.0
+Patient_State_Jharkhand,0.0
+Patient_State_Gujarat ,0.0
+Patient_State_Uttar Pradesh,0.0

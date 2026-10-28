@@ -1,0 +1,11 @@
+Feature,LIME_Weight
+Age_Group_60+ <= 0.00,0.2739901611399003
+Age <= 45.00,0.2347229182408544
+Medication_Physical Therapy and Pain Management <= 0.00,0.2312160999740367
+Condition_Respiratory Infection <= 0.00,0.22632794082027924
+Medication_Antibiotics and Rest <= 0.00,0.15916623620520107
+Medication_Insulin Therapy <= 0.00,0.15620234822910833
+Condition_Osteoarthritis <= 0.00,0.14141211316357402
+6000.00 < Total_Cost <= 15000.00,0.07875589443059336
+Medication_Cardiac Catheterization <= 0.00,0.07646298315481122
+3.00 < Satisfaction <= 4.00,0.003952311207685457

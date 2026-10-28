@@ -1,0 +1,11 @@
+Feature,Mean_Absolute_SHAP_Value
+Age,0.15979671506661453
+Age_Group_60+,0.125498731607342
+Total_Cost,0.087422026232095
+Satisfaction,0.04256269227761168
+Condition_Respiratory Infection,0.036032164361369405
+Medication_Antibiotics and Rest,0.030439691845532413
+Medication_Physical Therapy and Pain Management,0.026574949365071893
+Condition_Osteoarthritis,0.019216318383623403
+Medication_Insulin Therapy,0.016109631460630186
+Medication_Cardiac Catheterization,0.009100579839582526
