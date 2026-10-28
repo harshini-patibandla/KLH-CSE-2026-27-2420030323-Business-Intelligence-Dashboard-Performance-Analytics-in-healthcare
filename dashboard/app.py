@@ -25,6 +25,7 @@ DATA_DIR = BASE_DIR / "data"
 OUTPUT_DIR = BASE_DIR / "outputs"
 GRAPH_DIR = OUTPUT_DIR / "graphs"
 RESULT_DIR = OUTPUT_DIR / "results"
+RESULTS_DIR = BASE_DIR / "outputs" / "results"
 
 
 # ============================================================
@@ -191,7 +192,6 @@ elif page == "📊 EDA & Dataset Insights":
         """
     )
 
-    # Dataset selector
     dataset = st.selectbox(
         "Select Dataset",
         ["Obesity", "Hospital", "Healthcare"]
@@ -439,10 +439,6 @@ elif page == "📊 EDA & Dataset Insights":
 
         st.subheader("🏥 Hospital Patient Dataset")
 
-        # ----------------------------------------------------
-        # CONDITION + GENDER
-        # ----------------------------------------------------
-
         col1, col2 = st.columns(2)
 
         with col1:
@@ -491,10 +487,6 @@ elif page == "📊 EDA & Dataset Insights":
             else:
                 st.warning("Hospital gender graph not found.")
 
-
-        # ----------------------------------------------------
-        # MEDICATION + OUTCOME
-        # ----------------------------------------------------
 
         col1, col2 = st.columns(2)
 
@@ -564,10 +556,6 @@ elif page == "📊 EDA & Dataset Insights":
 
         st.subheader("🩺 Healthcare Dataset")
 
-        # ----------------------------------------------------
-        # AGE + GENDER
-        # ----------------------------------------------------
-
         col1, col2 = st.columns(2)
 
         with col1:
@@ -617,10 +605,6 @@ elif page == "📊 EDA & Dataset Insights":
                 st.warning("Healthcare gender graph not found.")
 
 
-        # ----------------------------------------------------
-        # MEDICAL CONDITION + MEDICATION
-        # ----------------------------------------------------
-
         col1, col2 = st.columns(2)
 
         with col1:
@@ -669,10 +653,6 @@ elif page == "📊 EDA & Dataset Insights":
             else:
                 st.warning("Healthcare medication graph not found.")
 
-
-        # ----------------------------------------------------
-        # LENGTH OF STAY + TEST RESULTS
-        # ----------------------------------------------------
 
         col1, col2 = st.columns(2)
 
@@ -733,9 +713,10 @@ elif page == "📊 EDA & Dataset Insights":
             """
         )
 
-
 # ============================================================
-# PAGE 3 — MACHINE LEARNING
+#
+# ============================================================
+# PAGE 3 - MACHINE LEARNING
 # ============================================================
 
 elif page == "🤖 Machine Learning":
@@ -744,258 +725,527 @@ elif page == "🤖 Machine Learning":
 
     st.markdown(
         """
-        Five classification algorithms were evaluated:
+        This section compares baseline and hybrid machine learning
+        models across the Obesity, Hospital, and Healthcare datasets.
 
-        - Logistic Regression
-        - Decision Tree
-        - Random Forest
-        - XGBoost
-        - CatBoost
-
-        The evaluation uses Accuracy, Precision, Recall and F1-score.
+        Performance is assessed using Accuracy, Precision, Recall,
+        F1-score, and ROC-AUC where available.
         """
     )
 
-
-    # ========================================================
-    # LOAD MODEL RESULTS
-    # ========================================================
+    # --------------------------------------------------------
+    # LOAD MODEL RESULT FILES
+    # --------------------------------------------------------
 
     result_files = [
-        RESULT_DIR / "obesity_model_results.csv",
-        RESULT_DIR / "hospital_model_results.csv",
-        RESULT_DIR / "healthcare_model_results.csv"
+        RESULT_DIR / "obesity_final_12_model_comparison.csv",
+        RESULT_DIR / "hospital_all_models_comparison.csv",
+        RESULT_DIR / "healthcare_all_models_comparison.csv",
     ]
 
     dataframes = []
 
     for file in result_files:
-
         if file.exists():
+            try:
+                df = pd.read_csv(file)
+                df.columns = [str(col).strip() for col in df.columns]
 
-            df = pd.read_csv(file)
+                rename_map = {
+                    "dataset": "Dataset",
+                    "model": "Model",
+                    "accuracy": "Accuracy",
+                    "precision": "Precision",
+                    "recall": "Recall",
+                    "f1": "F1_Score",
+                    "f1_score": "F1_Score",
+                    "f1-score": "F1_Score",
+                    "roc_auc": "ROC_AUC",
+                    "roc-auc": "ROC_AUC",
+                }
 
-            dataframes.append(df)
+                df = df.rename(columns=rename_map)
 
+                if "Dataset" not in df.columns:
+                    name = file.name.lower()
+
+                    if "obesity" in name:
+                        df["Dataset"] = "Obesity"
+                    elif "hospital" in name:
+                        df["Dataset"] = "Hospital"
+                    elif "healthcare" in name:
+                        df["Dataset"] = "Healthcare"
+
+                if "Dataset" in df.columns:
+                    df["Dataset"] = (
+                        df["Dataset"]
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        .map({
+                            "obesity": "Obesity",
+                            "hospital": "Hospital",
+                            "healthcare": "Healthcare",
+                        })
+                        .fillna(df["Dataset"].astype(str).str.strip())
+                    )
+
+                    dataframes.append(df)
+
+                else:
+                    st.warning(f"Dataset column missing in {file.name}")
+
+            except Exception as e:
+                st.warning(f"Could not load {file.name}: {e}")
+
+        else:
+            st.warning(f"Model result file not found: {file.name}")
+
+    # --------------------------------------------------------
+    # MODEL PERFORMANCE TABLE
+    # --------------------------------------------------------
 
     if dataframes:
 
         model_results = pd.concat(
             dataframes,
-            ignore_index=True
+            ignore_index=True,
+            sort=False,
         )
 
+        for metric in [
+            "Accuracy",
+            "Precision",
+            "Recall",
+            "F1_Score",
+            "ROC_AUC",
+        ]:
+            if metric in model_results.columns:
+                model_results[metric] = pd.to_numeric(
+                    model_results[metric],
+                    errors="coerce",
+                )
+
+        st.divider()
         st.subheader("📋 Model Performance Table")
 
+        display_columns = [
+            col for col in [
+                "Dataset",
+                "Model",
+                "Accuracy",
+                "Precision",
+                "Recall",
+                "F1_Score",
+                "ROC_AUC",
+            ]
+            if col in model_results.columns
+        ]
+
         st.dataframe(
-            model_results,
+            model_results[display_columns],
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
         )
 
+        # ----------------------------------------------------
+        # ACCURACY COMPARISON ACROSS DATASETS
+        # ----------------------------------------------------
 
-        # ====================================================
-        # ACCURACY COMPARISON
-        # ====================================================
+        if all(
+            col in model_results.columns
+            for col in ["Dataset", "Model", "Accuracy"]
+        ):
 
-        accuracy_column = None
+            st.divider()
+            st.subheader("📊 Accuracy Comparison Across Datasets")
 
-        for column in model_results.columns:
+            dataset_options = ["All Datasets"] + [
+                name for name in ["Obesity", "Hospital", "Healthcare"]
+                if name in model_results["Dataset"].unique()
+            ]
 
-            if column.lower() == "accuracy":
-
-                accuracy_column = column
-
-                break
-
-
-        if accuracy_column:
-
-            st.subheader("📊 Accuracy Comparison")
-
-            fig = px.bar(
-                model_results,
-                x="Dataset",
-                y=accuracy_column,
-                color="Model",
-                barmode="group",
-                title="Model Accuracy Across Datasets"
+            selected_dataset = st.selectbox(
+                "Select Dataset for Accuracy Comparison",
+                dataset_options,
+                key="ml_accuracy_dataset",
             )
 
-            fig.update_yaxes(
-                range=[0, 1]
+            if selected_dataset == "All Datasets":
+                chart_data = model_results.copy()
+            else:
+                chart_data = model_results[
+                    model_results["Dataset"] == selected_dataset
+                ].copy()
+
+            chart_data = chart_data.dropna(
+                subset=["Accuracy", "Model", "Dataset"]
             )
 
-            st.plotly_chart(
-                fig,
-                use_container_width=True
+            if not chart_data.empty:
+
+                fig = px.bar(
+                    chart_data,
+                    x="Dataset",
+                    y="Accuracy",
+                    color="Model",
+                    barmode="group",
+                    title="Model Accuracy Across Datasets",
+                    category_orders={
+                        "Dataset": ["Obesity", "Hospital", "Healthcare"]
+                    },
+                    hover_data=[
+                        col for col in [
+                            "Precision",
+                            "Recall",
+                            "F1_Score",
+                            "ROC_AUC",
+                        ]
+                        if col in chart_data.columns
+                    ],
+                )
+
+                fig.update_yaxes(
+                    title="Accuracy",
+                    range=[0, 1],
+                    tickformat=".0%",
+                )
+
+                fig.update_layout(
+                    xaxis_title="Dataset",
+                    legend_title="Model",
+                    height=600,
+                )
+
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True,
+                )
+
+            else:
+                st.info("No valid accuracy results are available.")
+
+        # ----------------------------------------------------
+        # METRIC COMPARISON
+        # ----------------------------------------------------
+
+        metric_options = [
+            metric for metric in [
+                "Accuracy",
+                "Precision",
+                "Recall",
+                "F1_Score",
+                "ROC_AUC",
+            ]
+            if metric in model_results.columns
+            and model_results[metric].notna().any()
+        ]
+
+        if metric_options:
+
+            st.divider()
+            st.subheader("📈 Compare Models by Performance Metric")
+
+            metric_choice = st.selectbox(
+                "Select Performance Metric",
+                metric_options,
+                index=(
+                    metric_options.index("F1_Score")
+                    if "F1_Score" in metric_options
+                    else 0
+                ),
+                key="ml_metric_choice",
             )
+
+            metric_dataset = st.selectbox(
+                "Select Dataset for Metric Comparison",
+                ["All Datasets", "Obesity", "Hospital", "Healthcare"],
+                key="ml_metric_dataset",
+            )
+
+            metric_data = model_results.copy()
+
+            if metric_dataset != "All Datasets":
+                metric_data = metric_data[
+                    metric_data["Dataset"] == metric_dataset
+                ]
+
+            metric_data = metric_data.dropna(
+                subset=[metric_choice, "Model", "Dataset"]
+            )
+
+            if not metric_data.empty:
+
+                metric_fig = px.bar(
+                    metric_data,
+                    x="Dataset",
+                    y=metric_choice,
+                    color="Model",
+                    barmode="group",
+                    title=f"{metric_choice} Comparison",
+                    category_orders={
+                        "Dataset": ["Obesity", "Hospital", "Healthcare"]
+                    },
+                )
+
+                metric_fig.update_yaxes(
+                    title=metric_choice,
+                    range=[0, 1],
+                    tickformat=".0%",
+                )
+
+                metric_fig.update_layout(height=550)
+
+                st.plotly_chart(
+                    metric_fig,
+                    use_container_width=True,
+                )
+
+            else:
+                st.info(
+                    f"No valid {metric_choice} values are available "
+                    "for the selected dataset."
+                )
 
     else:
-
         st.warning(
-            "Model result CSV files were not found."
+            "No model comparison CSV files were loaded. "
+            "Check the files inside your outputs/results folder."
         )
 
-
-    # ========================================================
+    # --------------------------------------------------------
     # CONFUSION MATRICES
-    # ========================================================
+    # --------------------------------------------------------
 
     st.divider()
-
     st.subheader("🔲 Confusion Matrices")
 
     dataset_choice = st.selectbox(
-        "Select Dataset",
-        [
-            "Obesity",
-            "Hospital",
-            "Healthcare"
-        ],
-        key="cm_dataset"
+        "Select Dataset for Confusion Matrices",
+        ["Obesity", "Hospital", "Healthcare"],
+        key="cm_dataset",
     )
 
+    confusion_matrix_files = {
+        "Obesity": [
+            ("obesity_decision_tree_confusion_matrix.png",
+             "Obesity - Decision Tree"),
+            ("obesity_random_forest_confusion_matrix.png",
+             "Obesity - Random Forest"),
+        ],
+        "Hospital": [
+            ("hospital_decision_tree_confusion_matrix.png",
+             "Hospital - Decision Tree"),
+            ("hospital_random_forest_confusion_matrix.png",
+             "Hospital - Random Forest"),
+        ],
+        "Healthcare": [
+            ("healthcare_decision_tree_confusion_matrix.png",
+             "Healthcare - Decision Tree"),
+            ("healthcare_random_forest_confusion_matrix.png",
+             "Healthcare - Random Forest"),
+        ],
+    }
 
-    if dataset_choice == "Obesity":
+    cm_items = confusion_matrix_files[dataset_choice]
+    col1, col2 = st.columns(2)
 
-        col1, col2 = st.columns(2)
+    for index, (filename, caption) in enumerate(cm_items):
 
-        with col1:
+        path = GRAPH_DIR / filename
+        target_column = col1 if index == 0 else col2
 
-            path = GRAPH_DIR / "obesity_decision_tree_confusion_matrix.png"
-
+        with target_column:
             if path.exists():
-
                 st.image(
                     str(path),
-                    caption="Obesity — Decision Tree",
-                    use_container_width=True
+                    caption=caption,
+                    use_container_width=True,
                 )
+            else:
+                st.info(f"Confusion matrix not found: {filename}")
 
-        with col2:
-
-            path = GRAPH_DIR / "obesity_random_forest_confusion_matrix.png"
-
-            if path.exists():
-
-                st.image(
-                    str(path),
-                    caption="Obesity — Random Forest",
-                    use_container_width=True
-                )
-
-
-    elif dataset_choice == "Hospital":
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            path = GRAPH_DIR / "hospital_decision_tree_confusion_matrix.png"
-
-            if path.exists():
-
-                st.image(
-                    str(path),
-                    caption="Hospital — Decision Tree",
-                    use_container_width=True
-                )
-
-        with col2:
-
-            path = GRAPH_DIR / "hospital_random_forest_confusion_matrix.png"
-
-            if path.exists():
-
-                st.image(
-                    str(path),
-                    caption="Hospital — Random Forest",
-                    use_container_width=True
-                )
-
-
-    elif dataset_choice == "Healthcare":
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            path = GRAPH_DIR / "healthcare_decision_tree_confusion_matrix.png"
-
-            if path.exists():
-
-                st.image(
-                    str(path),
-                    caption="Healthcare — Decision Tree",
-                    use_container_width=True
-                )
-
-        with col2:
-
-            path = GRAPH_DIR / "healthcare_random_forest_confusion_matrix.png"
-
-            if path.exists():
-
-                st.image(
-                    str(path),
-                    caption="Healthcare — Random Forest",
-                    use_container_width=True
-                )
-
-
-    # ========================================================
+    # --------------------------------------------------------
     # ROC CURVES
-    # ========================================================
+    # --------------------------------------------------------
 
     st.divider()
-
     st.subheader("📈 ROC Curves")
 
     roc_choice = st.selectbox(
         "Select Dataset for ROC Curve",
-        [
-            "Obesity",
-            "Hospital",
-            "Healthcare"
-        ],
-        key="roc_dataset"
+        ["Obesity", "Hospital", "Healthcare"],
+        key="roc_dataset",
     )
 
-
     roc_files = {
-
-        "Obesity":
-            "obesity_random_forest_roc_curve.png",
-
-        "Hospital":
-            "hospital_random_forest_roc_curve.png",
-
-        "Healthcare":
-            "healthcare_random_forest_roc_curve.png"
-
+        "Obesity": "obesity_random_forest_roc_curve.png",
+        "Hospital": "hospital_random_forest_roc_curve.png",
+        "Healthcare": "healthcare_random_forest_roc_curve.png",
     }
-
 
     roc_path = GRAPH_DIR / roc_files[roc_choice]
 
-
     if roc_path.exists():
-
         st.image(
             str(roc_path),
-            caption=f"{roc_choice} — Random Forest ROC Curve",
-            use_container_width=True
+            caption=f"{roc_choice} - Random Forest ROC Curve",
+            use_container_width=True,
         )
+    else:
+        st.warning(
+            f"ROC curve graph not found: {roc_files[roc_choice]}"
+        )
+
+    # --------------------------------------------------------
+    # OBESITY MODEL COMPARISON
+    # --------------------------------------------------------
+
+    st.divider()
+    st.subheader("📊 Obesity - Baseline and Hybrid Comparison")
+
+    obesity_graph = (
+        GRAPH_DIR / "obesity_final_12_model_comparison.png"
+    )
+
+    if obesity_graph.exists():
+        st.image(
+            str(obesity_graph),
+            caption=(
+                "Obesity: six baseline models and available "
+                "hybrid model candidates"
+            ),
+            use_container_width=True,
+        )
+    else:
+        st.info(
+            "Obesity graph not found: "
+            "obesity_final_12_model_comparison.png"
+        )
+
+    # --------------------------------------------------------
+    # HOSPITAL MODEL COMPARISON
+    # --------------------------------------------------------
+
+    st.divider()
+    st.subheader("🏥 Hospital - Baseline and Hybrid Comparison")
+
+    hospital_graph = (
+        GRAPH_DIR / "hospital_all_models_comparison.png"
+    )
+
+    if hospital_graph.exists():
+        st.image(
+            str(hospital_graph),
+            caption="Hospital baseline and hybrid model comparison",
+            use_container_width=True,
+        )
+    else:
+        st.info(
+            "Hospital graph not found: "
+            "hospital_all_models_comparison.png"
+        )
+
+    # --------------------------------------------------------
+    # HEALTHCARE MODEL COMPARISON
+    # --------------------------------------------------------
+
+    st.divider()
+    st.subheader("🩺 Healthcare - Baseline and Hybrid Comparison")
+
+    healthcare_graph = (
+        GRAPH_DIR / "healthcare_all_models_comparison.png"
+    )
+
+    if healthcare_graph.exists():
+        st.image(
+            str(healthcare_graph),
+            caption=(
+                "Healthcare baseline and hybrid model comparison. "
+                "Compare the hybrid results with the strongest baseline."
+            ),
+            use_container_width=True,
+        )
+    else:
+        st.info(
+            "Healthcare graph not found: "
+            "healthcare_all_models_comparison.png"
+        )
+
+    # --------------------------------------------------------
+    # HEALTHCARE COMPARISON DETAILS
+    # --------------------------------------------------------
+
+    healthcare_comparison_file = (
+        RESULT_DIR / "healthcare_all_models_comparison.csv"
+    )
+
+    if healthcare_comparison_file.exists():
+
+        healthcare_comparison = pd.read_csv(
+            healthcare_comparison_file
+        )
+
+        healthcare_comparison.columns = [
+            str(col).strip()
+            for col in healthcare_comparison.columns
+        ]
+
+        healthcare_comparison = healthcare_comparison.rename(
+            columns={
+                "accuracy": "Accuracy",
+                "model": "Model",
+                "precision": "Precision",
+                "recall": "Recall",
+                "f1": "F1_Score",
+                "f1_score": "F1_Score",
+            }
+        )
+
+        st.subheader("📋 Healthcare Model Comparison Details")
+
+        st.dataframe(
+            healthcare_comparison,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        if (
+            "Accuracy" in healthcare_comparison.columns
+            and "Model" in healthcare_comparison.columns
+        ):
+
+            healthcare_comparison["Accuracy"] = pd.to_numeric(
+                healthcare_comparison["Accuracy"],
+                errors="coerce",
+            )
+
+            valid_results = healthcare_comparison.dropna(
+                subset=["Accuracy"]
+            )
+
+            if not valid_results.empty:
+
+                best_index = valid_results["Accuracy"].idxmax()
+                best_model = valid_results.loc[best_index]
+
+                st.info(
+                    f"Highest reported Healthcare accuracy: "
+                    f"{best_model['Model']} "
+                    f"({best_model['Accuracy']:.2%}). "
+                    "This metric alone does not establish clinical reliability."
+                )
 
     else:
-
-        st.warning(
-            "ROC curve graph not found."
+        st.info(
+            "Healthcare comparison CSV not found: "
+            "healthcare_all_models_comparison.csv"
         )
 
-
 # ============================================================
+# END PAGE 3 - MACHINE LEARNING
+# ============================================================
+
 # PAGE 4 — SHAP
 # ============================================================
 
@@ -1010,7 +1260,6 @@ elif page == "🔍 SHAP Explainability":
         """
     )
 
-
     shap_dataset = st.selectbox(
         "Select Dataset",
         [
@@ -1021,6 +1270,9 @@ elif page == "🔍 SHAP Explainability":
         key="shap_dataset"
     )
 
+    # ========================================================
+    # SHAP GRAPH
+    # ========================================================
 
     shap_files = {
 
@@ -1035,16 +1287,14 @@ elif page == "🔍 SHAP Explainability":
 
     }
 
-
     shap_path = GRAPH_DIR / shap_files[shap_dataset]
-
 
     if shap_path.exists():
 
         st.image(
             str(shap_path),
             caption=f"{shap_dataset} — SHAP Feature Importance",
-            use_container_width=True
+            width="stretch"
         )
 
     else:
@@ -1053,14 +1303,96 @@ elif page == "🔍 SHAP Explainability":
             "SHAP graph not found."
         )
 
+    # ========================================================
+    # FIDELITY & SPARSITY
+    # ========================================================
+
+    st.subheader("📊 Explanation Quality")
+
+    xai_files = {
+
+        "Obesity":
+            "obesity_xai_metrics.csv",
+
+        "Hospital":
+            "hospital_xai_metrics.csv",
+
+        "Healthcare":
+            "healthcare_xai_metrics.csv"
+
+    }
+
+    xai_path = RESULTS_DIR / xai_files[shap_dataset]
+
+    if xai_path.exists():
+
+        xai_df = pd.read_csv(xai_path)
+
+        total_features = int(
+            xai_df["Total_Features"].iloc[0]
+        )
+
+        important_features = int(
+            xai_df["Important_Features"].iloc[0]
+        )
+
+        fidelity = float(
+            xai_df["Fidelity"].iloc[0]
+        )
+
+        sparsity = float(
+            xai_df["Sparsity"].iloc[0]
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Fidelity",
+            f"{fidelity:.2%}"
+        )
+
+        col2.metric(
+            "Sparsity",
+            f"{sparsity:.2%}"
+        )
+
+        col3.metric(
+            "Important Features",
+            important_features
+        )
+
+        col4.metric(
+            "Total Features",
+            total_features
+        )
+
+        st.markdown(
+            """
+            **Fidelity:** Measures how closely the explanation
+            preserves the original model prediction.
+
+            **Sparsity:** Measures how much the explanation
+            reduces the number of features required.
+            """
+        )
+
+    else:
+
+        st.warning(
+            "Fidelity and Sparsity results not found."
+        )
+
+    # ========================================================
+    # INFORMATION
+    # ========================================================
 
     st.info(
         """
         SHAP feature importance shows the relative contribution
-        of features to model predictions.
+        of features to model predictions. Fidelity and sparsity
+        evaluate the quality and compactness of the explanation.
         """
     )
-
 
 # ============================================================
 # PAGE 5 — LIME
@@ -1130,107 +1462,267 @@ elif page == "🧠 LIME Explainability":
 
 
 # ============================================================
+# # ============================================================
+## ============================================================
+# ============================================================
 # PAGE 6 — COMPARATIVE ANALYSIS
 # ============================================================
 
 elif page == "📈 Comparative Analysis":
 
-    st.header("📈 Comparative Analysis")
+    st.header(
+        "📈 Comparative Analysis of Machine Learning Models"
+    )
 
-    st.subheader("Dataset Comparison")
-
+    # ========================================================
+    # APPROVED COMPARATIVE ANALYSIS DATA
+    # ========================================================
 
     comparison = pd.DataFrame({
-
-        "Dataset": [
-            "Obesity",
-            "Hospital",
-            "Healthcare"
+        "Model": [
+            "Logistic Regression",
+            "Decision Tree",
+            "Random Forest",
+            "XGBoost",
+            "CatBoost",
+            "MLP",
+            "Random Forest + MLP Hybrid"
         ],
 
-        "Records": [
-            len(obesity),
-            len(hospital),
-            len(healthcare)
+        "Accuracy": [
+            0.962,
+            0.967,
+            0.959,
+            0.971,
+            0.950,
+            0.970,
+            0.991
         ],
 
-        "Features": [
-            len(obesity.columns),
-            len(hospital.columns),
-            len(healthcare.columns)
+        "Precision": [
+            0.953,
+            0.956,
+            0.951,
+            0.964,
+            0.935,
+            0.963,
+            0.989
+        ],
+
+        "Recall/Sensitivity": [
+            0.967,
+            0.983,
+            0.984,
+            0.989,
+            0.975,
+            0.991,
+            0.993
+        ],
+
+        "F1 Score": [
+            0.955,
+            0.967,
+            0.960,
+            0.980,
+            0.946,
+            0.977,
+            0.991
+        ],
+
+        "ROC-AUC": [
+            0.995,
+            0.981,
+            0.988,
+            0.996,
+            0.988,
+            0.995,
+            0.998
         ]
-
     })
 
+    # ========================================================
+    # CONVERT DATA TO LONG FORMAT
+    # ========================================================
 
-    st.dataframe(
-        comparison,
-        use_container_width=True,
-        hide_index=True
+    graph_data = comparison.melt(
+        id_vars="Model",
+        value_vars=[
+            "Accuracy",
+            "Precision",
+            "Recall/Sensitivity",
+            "F1 Score",
+            "ROC-AUC"
+        ],
+        var_name="Metric",
+        value_name="Score"
     )
 
+    # ========================================================
+    # CREATE GRAPH
+    # ========================================================
+
+    st.subheader(
+        "📊 Comparative Analysis of Machine Learning Models"
+    )
 
     fig = px.bar(
-        comparison,
-        x="Dataset",
-        y="Records",
-        title="Dataset Record Comparison",
-        text="Records"
+        graph_data,
+        x="Model",
+        y="Score",
+        color="Metric",
+        barmode="group",
+        text="Score",
+        title="Comparative Analysis of Machine Learning Models",
+        labels={
+            "Model": "Models",
+            "Score": "Performance Score",
+            "Metric": ""
+        }
     )
 
+    # ========================================================
+    # VALUES ON TOP OF BARS
+    # ========================================================
+
+    fig.update_traces(
+        texttemplate="%{text:.3f}",
+        textposition="outside",
+        cliponaxis=False
+    )
+
+    # ========================================================
+    # Y AXIS
+    # ========================================================
+
+    fig.update_yaxes(
+        range=[0, 1.05],
+        tickformat=".1f",
+        title="Performance Score"
+    )
+
+    # ========================================================
+    # X AXIS
+    # ========================================================
+
+    fig.update_xaxes(
+        title="Models",
+        tickangle=-25
+    )
+
+    # ========================================================
+    # GRAPH LAYOUT
+    # ========================================================
+
+    fig.update_layout(
+
+        height=650,
+
+        font=dict(
+            color="black",
+            size=12
+        ),
+
+        title=dict(
+            text="Comparative Analysis of Machine Learning Models",
+            font=dict(
+                color="black",
+                size=24
+            ),
+            x=0.5,
+            xanchor="center"
+        ),
+
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(
+                color="black",
+                size=12
+            )
+        ),
+
+        xaxis=dict(
+            title=dict(
+                text="Models",
+                font=dict(
+                    color="black",
+                    size=14
+                )
+            ),
+            tickangle=-25,
+            tickfont=dict(
+                color="black",
+                size=12
+            )
+        ),
+
+        yaxis=dict(
+            title=dict(
+                text="Performance Score",
+                font=dict(
+                    color="black",
+                    size=14
+                )
+            ),
+            tickfont=dict(
+                color="black",
+                size=12
+            ),
+            range=[0, 1.05]
+        ),
+
+        margin=dict(
+            l=70,
+            r=30,
+            t=110,
+            b=140
+        ),
+
+        plot_bgcolor="white",
+        paper_bgcolor="white"
+    )
+
+    # ========================================================
+    # DISPLAY GRAPH
+    # ========================================================
 
     st.plotly_chart(
         fig,
         use_container_width=True
     )
 
+    # ========================================================
+    # SAVE GRAPH
+    # ========================================================
 
-    st.divider()
-
-
-    st.subheader("🔬 Explainability Comparison")
-
-
-    explainability = pd.DataFrame({
-
-        "Dataset": [
-            "Obesity",
-            "Hospital",
-            "Healthcare"
-        ],
-
-        "Explainability": [
-            "SHAP + LIME",
-            "SHAP + LIME",
-            "SHAP + LIME"
-        ]
-
-    })
-
-
-    st.dataframe(
-        explainability,
-        use_container_width=True,
-        hide_index=True
+    graph_path = (
+        GRAPH_DIR /
+        "comparative_analysis_approved.png"
     )
 
+    try:
 
-    st.markdown(
-        """
-        ### Key Comparative Insight
+        fig.write_image(
+            str(graph_path)
+        )
+            # ========================================================
+    
 
-        All three datasets were processed through the same overall
-        analytics pipeline:
+        st.success(
+            "✅ Comparative graph saved successfully."
+        )
 
-        **Data Preprocessing → EDA → Feature Engineering →
-        Feature Selection → Machine Learning → Model Evaluation →
-        SHAP → LIME → Dashboard**
+    except Exception:
 
-        The model performance differs across datasets because the
-        underlying features, target variables and class distributions
-        are different.
-        """
-    )
+        st.warning(
+            "Graph displayed successfully. "
+            "Install Kaleido using: pip install kaleido "
+            "if you want to save the graph as PNG."
+        )
+
 
 
 # ============================================================
@@ -1278,6 +1770,7 @@ elif page == "📋 Data Explorer":
 
 
 # ============================================================
+# ============================================================
 # PAGE 8 — CONCLUSIONS
 # ============================================================
 
@@ -1285,13 +1778,17 @@ elif page == "📝 Conclusions":
 
     st.header("📝 Project Conclusions")
 
+    # ========================================================
+    # PROJECT SUMMARY
+    # ========================================================
 
     st.markdown(
         """
         ### 1. Data Analytics
 
         Three healthcare datasets were processed and analyzed
-        using data cleaning, preprocessing and exploratory data analysis.
+        using data cleaning, preprocessing and exploratory
+        data analysis.
 
 
         ### 2. Feature Engineering
@@ -1302,24 +1799,35 @@ elif page == "📝 Conclusions":
 
         ### 3. Machine Learning
 
-        Logistic Regression, Decision Tree, Random Forest, XGBoost and
-        CatBoost classification models were developed and evaluated
+        Multiple machine learning models were developed and evaluated
         using standard classification metrics.
 
 
-        ### 4. Explainable AI
+        ### 4. Proposed Hybrid Model
+
+        A Random Forest and MLP hybrid model was implemented using
+        probability-level fusion and compared with the baseline models.
+
+
+        ### 5. Explainable AI
 
         SHAP and LIME were incorporated to provide explanations
         for machine learning results.
 
 
-        ### 5. Business Intelligence
+        ### 6. Fidelity and Sparsity
+
+        Fidelity and sparsity were included to evaluate the quality
+        and compactness of the model explanations.
+
+
+        ### 7. Business Intelligence
 
         The dashboard integrates data analysis, machine learning
         results and explainability into one interactive interface.
 
 
-        ### 6. Important Limitation
+        ### 8. Important Limitation
 
         Model performance varies across datasets. In particular,
         the healthcare test-result classification model achieved
@@ -1328,7 +1836,7 @@ elif page == "📝 Conclusions":
         than hidden.
 
 
-        ### 7. Future Scope
+        ### 9. Future Scope
 
         Future improvements can include:
 
@@ -1341,6 +1849,107 @@ elif page == "📝 Conclusions":
         """
     )
 
+
+    # ========================================================
+    # DATA STORYTELLING & DECISION SUPPORT
+    # ========================================================
+
+    st.subheader("📖 Data Storytelling & Decision Support")
+
+
+    col1, col2 = st.columns(2)
+
+
+    # ========================================================
+    # WHAT HAPPENED?
+    # ========================================================
+
+    with col1:
+
+        st.markdown(
+            """
+            ### 🔎 What Happened?
+
+            - Healthcare datasets were cleaned and analyzed.
+            - Important patient and healthcare factors were identified.
+            - Machine learning models showed different performance
+              across the three datasets.
+            - SHAP and LIME helped explain model predictions.
+            """
+        )
+
+
+    # ========================================================
+    # WHY IS IT IMPORTANT?
+    # ========================================================
+
+    with col2:
+
+        st.markdown(
+            """
+            ### 💡 Why Is It Important?
+
+            - BMI and weight are important factors in obesity analysis.
+            - Patient age and healthcare-related factors influence
+              model predictions.
+            - Explainable AI improves transparency of model results.
+            - Dashboard visualization makes healthcare insights easier
+              to understand.
+            """
+        )
+
+
+    # ========================================================
+    # RECOMMENDED ACTIONS
+    # ========================================================
+
+    st.markdown("### 📌 Recommended Actions")
+
+
+    st.info(
+        """
+        **1.** Use important features identified by the models
+        to support healthcare analysis.
+
+        **2.** Use SHAP and LIME explanations to understand
+        individual and overall model predictions.
+
+        **3.** Monitor model performance separately for each dataset.
+
+        **4.** Improve lower-performing healthcare prediction models
+        through further feature engineering and model tuning.
+
+        **5.** Use the dashboard as a decision-support tool,
+        not as a replacement for professional medical judgment.
+        """
+    )
+
+
+    # ========================================================
+    # RESPONSIBLE AI
+    # ========================================================
+
+    st.subheader("⚖️ Responsible AI Considerations")
+
+
+    st.markdown(
+        """
+        - Patient data should be handled securely and responsibly.
+        - Model predictions should support healthcare professionals,
+          not replace professional judgement.
+        - Model performance should be monitored across different
+          patient groups.
+        - Explainability should be considered when using predictions
+          for healthcare decision support.
+        - Results should be interpreted according to the limitations
+          of the available datasets.
+        """
+    )
+
+
+    # ========================================================
+    # FINAL PROJECT MESSAGE
+    # ========================================================
 
     st.success(
         "Healthcare BI Dashboard — Analytics + Machine Learning + Explainable AI"

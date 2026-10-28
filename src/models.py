@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -19,6 +20,7 @@ from sklearn.metrics import (
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
@@ -376,12 +378,76 @@ def train_models(
 
 
     # ========================================================
+    # MLP — MULTI-LAYER PERCEPTRON
+    # ========================================================
+
+    print("\nTraining MLP...")
+
+    # Neural networks work better with scaled numerical features
+    scaler = StandardScaler()
+
+    X_train_scaled = scaler.fit_transform(
+        X_train
+    )
+
+    X_test_scaled = scaler.transform(
+        X_test
+    )
+
+    mlp_model = MLPClassifier(
+        hidden_layer_sizes=(64, 32),
+        activation="relu",
+        solver="adam",
+        max_iter=1000,
+        random_state=42
+    )
+
+    mlp_model.fit(
+        X_train_scaled,
+        y_train
+    )
+
+    mlp_predictions = mlp_model.predict(
+        X_test_scaled
+    )
+
+    mlp_accuracy = accuracy_score(
+        y_test,
+        mlp_predictions
+    )
+
+    mlp_precision = precision_score(
+        y_test,
+        mlp_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    mlp_recall = recall_score(
+        y_test,
+        mlp_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    mlp_f1 = f1_score(
+        y_test,
+        mlp_predictions,
+        average="weighted",
+        zero_division=0
+    )
+
+    print("MLP completed.")
+
+
+    # ========================================================
     # MODEL RESULTS
     # ========================================================
 
     results = pd.DataFrame({
 
         "Dataset": [
+            dataset_name,
             dataset_name,
             dataset_name,
             dataset_name,
@@ -394,7 +460,8 @@ def train_models(
             "Decision Tree",
             "Random Forest",
             "XGBoost",
-            "CatBoost"
+            "CatBoost",
+            "MLP"
         ],
 
         "Accuracy": [
@@ -402,7 +469,8 @@ def train_models(
             dt_accuracy,
             rf_accuracy,
             xgb_accuracy,
-            cat_accuracy
+            cat_accuracy,
+            mlp_accuracy
         ],
 
         "Precision": [
@@ -410,7 +478,8 @@ def train_models(
             dt_precision,
             rf_precision,
             xgb_precision,
-            cat_precision
+            cat_precision,
+            mlp_precision
         ],
 
         "Recall": [
@@ -418,7 +487,8 @@ def train_models(
             dt_recall,
             rf_recall,
             xgb_recall,
-            cat_recall
+            cat_recall,
+            mlp_recall
         ],
 
         "F1_Score": [
@@ -426,7 +496,8 @@ def train_models(
             dt_f1,
             rf_f1,
             xgb_f1,
-            cat_f1
+            cat_f1,
+            mlp_f1
         ]
     })
 
